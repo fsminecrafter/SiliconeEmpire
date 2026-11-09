@@ -1,0 +1,2562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silicon Empire</title>
+<style>
+  /* ============================================================
+     DESIGN TOKENS & RESET
+  ============================================================ */
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg:          #0d0f14;
+    --bg2:         #131720;
+    --bg3:         #1a2030;
+    --panel:       #111827;
+    --panel2:      #1c2433;
+    --border:      #2a3548;
+    --border2:     #3a4a60;
+    --accent:      #00d4ff;
+    --accent2:     #0099cc;
+    --green:       #00e676;
+    --red:         #ff3d57;
+    --yellow:      #ffd740;
+    --grey:        #6b7a94;
+    --text:        #c8d8f0;
+    --text2:       #8a9ab8;
+    --white:       #e8f0ff;
+    --font-mono:   'Share Tech Mono', monospace;
+    --font-ui:     'Rajdhani', sans-serif;
+    --radius:      4px;
+    --win-header:  28px;
+    --taskbar-h:   42px;
+    --topbar-h:    36px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    user-select: none;
+  }
+
+  /* ============================================================
+     DESKTOP
+  ============================================================ */
+  #desktop {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(0,100,160,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(0,60,100,0.06) 0%, transparent 50%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(42,53,72,0.15) 39px, rgba(42,53,72,0.15) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(42,53,72,0.15) 39px, rgba(42,53,72,0.15) 40px),
+      var(--bg);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ============================================================
+     TOP BAR
+  ============================================================ */
+  #topbar {
+    height: var(--topbar-h);
+    background: rgba(13,15,20,0.95);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 20px;
+    flex-shrink: 0;
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+
+  .topbar-logo {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-right: 8px;
+  }
+
+  .topbar-sep {
+    width: 1px;
+    height: 18px;
+    background: var(--border);
+  }
+
+  .topbar-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .topbar-label {
+    color: var(--text2);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  #bank-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+    transition: color 0.3s;
+    min-width: 90px;
+  }
+  #bank-value.negative { color: var(--red); }
+
+  #profit-btn {
+    cursor: pointer;
+    padding: 2px 7px;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: transparent;
+  }
+  #profit-btn:hover { border-color: var(--border2); background: rgba(255,255,255,0.04); }
+  #profit-btn.zero   { color: var(--grey); }
+  #profit-btn.pos    { color: var(--green); }
+  #profit-btn.neg    { color: var(--red); }
+
+  #date-value {
+    color: var(--text);
+    font-size: 12px;
+    min-width: 90px;
+  }
+
+  /* Time controls */
+  .time-controls {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: auto;
+  }
+
+  .time-btn {
+    padding: 3px 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text2);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .time-btn:hover { border-color: var(--accent2); color: var(--accent); }
+  .time-btn.active {
+    background: rgba(0,212,255,0.12);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ============================================================
+     DESKTOP AREA
+  ============================================================ */
+  #desktop-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ============================================================
+     DESKTOP ICONS
+  ============================================================ */
+  .desktop-icons {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .desk-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 72px;
+    padding: 6px 4px;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .desk-icon:hover {
+    background: rgba(0,212,255,0.07);
+    border-color: rgba(0,212,255,0.2);
+  }
+  .desk-icon .icon-gfx {
+    width: 40px; height: 40px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+  }
+  .desk-icon .icon-label {
+    font-size: 10px;
+    color: var(--text);
+    text-align: center;
+    text-shadow: 0 1px 3px #000;
+    line-height: 1.2;
+  }
+
+  /* ============================================================
+     WINDOWS
+  ============================================================ */
+  .window {
+    position: absolute;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,212,255,0.05);
+    min-width: 280px;
+    min-height: 160px;
+    overflow: hidden;
+  }
+
+  .window.focused {
+    border-color: var(--border2);
+    box-shadow: 0 12px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,212,255,0.12);
+  }
+
+  .win-header {
+    height: var(--win-header);
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 8px 0 10px;
+    gap: 8px;
+    flex-shrink: 0;
+    cursor: move;
+  }
+
+  .win-title {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: var(--font-mono);
+    pointer-events: none;
+  }
+
+  .win-controls {
+    display: flex;
+    gap: 4px;
+  }
+
+  .win-btn {
+    width: 18px; height: 18px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text2);
+    font-size: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .win-btn:hover { border-color: var(--border2); color: var(--white); }
+  .win-btn.close:hover { background: rgba(255,61,87,0.2); border-color: var(--red); color: var(--red); }
+
+  .win-body {
+    flex: 1;
+    overflow: auto;
+    padding: 12px;
+  }
+
+  .win-resize {
+    position: absolute;
+    right: 0; bottom: 0;
+    width: 14px; height: 14px;
+    cursor: nwse-resize;
+    opacity: 0.3;
+  }
+  .win-resize::after {
+    content: '';
+    position: absolute;
+    right: 3px; bottom: 3px;
+    width: 8px; height: 8px;
+    border-right: 2px solid var(--border2);
+    border-bottom: 2px solid var(--border2);
+  }
+
+  /* Borderless always-open windows */
+  .window.borderless {
+    border: 1px solid var(--border);
+    background: rgba(17,24,39,0.92);
+    backdrop-filter: blur(4px);
+  }
+  .window.borderless .win-header { cursor: default; background: rgba(26,32,48,0.6); }
+
+  /* ============================================================
+     TASKBAR
+  ============================================================ */
+  #taskbar {
+    height: var(--taskbar-h);
+    background: rgba(13,15,20,0.97);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 6px;
+    flex-shrink: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+
+  #start-btn {
+    padding: 5px 14px;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: var(--radius);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+  }
+  #start-btn:hover { background: rgba(0,212,255,0.2); }
+
+  .taskbar-sep { width: 1px; height: 24px; background: var(--border); margin: 0 2px; }
+
+  .taskbar-app-btn {
+    padding: 4px 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .taskbar-app-btn:hover { border-color: var(--border2); color: var(--text); }
+  .taskbar-app-btn.active { border-color: var(--accent2); color: var(--accent); background: rgba(0,212,255,0.08); }
+
+  /* ============================================================
+     START MENU
+  ============================================================ */
+  #start-menu {
+    position: fixed;
+    bottom: calc(var(--taskbar-h) + 6px);
+    left: 8px;
+    width: 220px;
+    background: rgba(17,24,39,0.97);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 8px;
+    z-index: 9999;
+    display: none;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.8);
+  }
+  #start-menu.visible { display: block; }
+
+  .start-menu-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 4px 8px 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 6px;
+  }
+
+  .start-item {
+    padding: 7px 10px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    transition: all 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .start-item:hover { background: rgba(0,212,255,0.1); color: var(--accent); }
+  .start-item.danger:hover { background: rgba(255,61,87,0.1); color: var(--red); }
+
+  /* ============================================================
+     PROFIT INFO POPUP
+  ============================================================ */
+  #profit-popup {
+    position: fixed;
+    top: calc(var(--topbar-h) + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 12px;
+    z-index: 9998;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  }
+  #profit-popup.visible { display: block; }
+
+  .profit-popup-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .profit-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(42,53,72,0.4);
+  }
+  .profit-row:last-child { border-bottom: none; }
+  .profit-row .label { color: var(--text2); }
+  .profit-row .val.pos { color: var(--green); }
+  .profit-row .val.neg { color: var(--red); }
+  .profit-row .val.neutral { color: var(--text); }
+  .profit-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0 0;
+    font-weight: 700;
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+
+  /* ============================================================
+     FORMS & INPUTS
+  ============================================================ */
+  .form-group { margin-bottom: 12px; }
+  .form-label {
+    display: block;
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    font-family: var(--font-mono);
+  }
+
+  .form-input, .form-select {
+    width: 100%;
+    padding: 7px 10px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--accent2); }
+  .form-select option { background: var(--bg2); }
+
+  .color-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .color-swatch {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .color-swatch:hover { transform: scale(1.15); }
+  .color-swatch.selected { border-color: var(--white); transform: scale(1.1); }
+
+  .btn {
+    padding: 8px 18px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: var(--border2); color: var(--white); }
+  .btn.primary {
+    background: rgba(0,212,255,0.15);
+    border-color: rgba(0,212,255,0.4);
+    color: var(--accent);
+  }
+  .btn.primary:hover { background: rgba(0,212,255,0.25); border-color: var(--accent); }
+  .btn.danger {
+    background: rgba(255,61,87,0.1);
+    border-color: rgba(255,61,87,0.3);
+    color: var(--red);
+  }
+  .btn.danger:hover { background: rgba(255,61,87,0.2); }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+  }
+
+  /* ============================================================
+     DIFFICULTY SELECTOR
+  ============================================================ */
+  .diff-options {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .diff-option {
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .diff-option:hover { border-color: var(--border2); background: var(--bg3); }
+  .diff-option.selected { border-color: var(--accent2); background: rgba(0,212,255,0.06); }
+  .diff-option .diff-name { font-weight: 600; font-size: 13px; }
+  .diff-option .diff-info { font-size: 11px; color: var(--text2); font-family: var(--font-mono); }
+
+  /* ============================================================
+     MODE SELECTOR
+  ============================================================ */
+  .mode-options {
+    display: flex;
+    gap: 6px;
+  }
+
+  .mode-option {
+    flex: 1;
+    padding: 8px 6px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .mode-option:hover { border-color: var(--border2); }
+  .mode-option.selected { border-color: var(--accent2); background: rgba(0,212,255,0.08); color: var(--accent); }
+  .mode-icon { font-size: 20px; display: block; margin-bottom: 3px; }
+
+  /* ============================================================
+     TABS
+  ============================================================ */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  .tab-btn {
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: var(--font-mono);
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ============================================================
+     PROJECT / PRODUCT CARDS
+  ============================================================ */
+  .project-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+
+  .project-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+
+  .project-card-title {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--white);
+  }
+
+  .project-badge {
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-progress { background: rgba(255,215,64,0.15); color: var(--yellow); border: 1px solid rgba(255,215,64,0.3); }
+  .badge-done     { background: rgba(0,230,118,0.12); color: var(--green); border: 1px solid rgba(0,230,118,0.3); }
+  .badge-contract { background: rgba(0,212,255,0.12); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+
+  .progress-bar-wrap {
+    height: 4px;
+    background: var(--bg3);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 5px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    transition: width 0.3s;
+  }
+
+  .project-meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 5px;
+    color: var(--text2);
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
+
+  /* ============================================================
+     HARDWARE CREATOR
+  ============================================================ */
+  .hw-type-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .hw-type-card {
+    padding: 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .hw-type-card:hover { border-color: var(--border2); background: var(--bg3); }
+  .hw-type-card.locked { opacity: 0.4; cursor: not-allowed; }
+  .hw-type-card .hw-icon { font-size: 28px; display: block; margin-bottom: 6px; }
+  .hw-type-card .hw-name { font-weight: 700; font-size: 13px; }
+  .hw-type-card .hw-desc { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+  /* CPU Config */
+  .cpu-config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .stat-preview {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px;
+    margin-top: 10px;
+  }
+
+  .stat-preview-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .stat-item .s-label { font-size: 10px; color: var(--text2); }
+  .stat-item .s-value { font-family: var(--font-mono); font-size: 12px; color: var(--white); }
+
+  /* ============================================================
+     CONTRACTS APP
+  ============================================================ */
+  .contract-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+
+  .contract-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .contract-company { font-weight: 700; font-size: 13px; }
+  .contract-value { font-family: var(--font-mono); font-size: 12px; color: var(--green); }
+
+  .contract-specs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .spec-chip {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-family: var(--font-mono);
+  }
+
+  /* ============================================================
+     RESEARCH TREE
+  ============================================================ */
+  .research-layout {
+    display: flex;
+    gap: 10px;
+    height: 100%;
+  }
+
+  .tech-tree-canvas {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    min-height: 300px;
+  }
+
+  .tech-node {
+    position: absolute;
+    width: 120px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 7px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 11px;
+  }
+  .tech-node:hover { border-color: var(--border2); }
+  .tech-node.researched { border-color: var(--green); background: rgba(0,230,118,0.06); }
+  .tech-node.researching { border-color: var(--yellow); background: rgba(255,215,64,0.05); }
+  .tech-node.locked { opacity: 0.4; cursor: not-allowed; }
+  .tech-node.available { border-color: var(--accent2); }
+
+  .tech-node-name { font-weight: 700; font-size: 11px; color: var(--white); }
+  .tech-node-cat  { font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+  .tech-node-cost { font-family: var(--font-mono); font-size: 10px; color: var(--yellow); margin-top: 4px; }
+
+  /* Research sidebar */
+  .research-sidebar {
+    width: 200px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px;
+    flex-shrink: 0;
+  }
+
+  .active-research-item {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px;
+    margin-bottom: 6px;
+    font-size: 11px;
+  }
+
+  .effort-slider { width: 100%; margin-top: 4px; }
+
+  /* ============================================================
+     PRODUCTION APP
+  ============================================================ */
+  .fab-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+
+  .fab-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .fab-card-title { font-weight: 700; font-size: 13px; }
+
+  .prod-bar-wrap {
+    height: 8px;
+    background: var(--bg3);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .prod-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #0066aa, var(--accent));
+  }
+
+  .fab-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text2);
+  }
+
+  /* ============================================================
+     SCROLLBAR
+  ============================================================ */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--grey); }
+
+  /* ============================================================
+     OVERLAY (for modals)
+  ============================================================ */
+  #overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9990;
+    display: none;
+  }
+  #overlay.visible { display: block; }
+
+  /* ============================================================
+     NOTIFICATIONS
+  ============================================================ */
+  #notifications {
+    position: fixed;
+    top: calc(var(--topbar-h) + 8px);
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 99999;
+    pointer-events: none;
+  }
+
+  .notif {
+    padding: 8px 14px;
+    border-radius: var(--radius);
+    border-left: 3px solid var(--accent);
+    background: rgba(17,24,39,0.97);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    font-size: 12px;
+    max-width: 280px;
+    animation: notif-in 0.2s ease;
+    pointer-events: auto;
+  }
+  .notif.success { border-left-color: var(--green); }
+  .notif.error   { border-left-color: var(--red); }
+  .notif.warn    { border-left-color: var(--yellow); }
+
+  @keyframes notif-in { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+  @keyframes notif-out { to { opacity: 0; transform: translateX(20px); } }
+
+  /* ============================================================
+     PAUSE OVERLAY
+  ============================================================ */
+  #pause-overlay {
+    position: fixed;
+    inset: var(--topbar-h) 0 var(--taskbar-h);
+    background: rgba(0,0,0,0.45);
+    z-index: 9980;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 24px;
+    color: var(--accent);
+    letter-spacing: 6px;
+    pointer-events: none;
+  }
+  #pause-overlay.visible { display: flex; }
+
+  /* Checkbox */
+  .form-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .form-check input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; accent-color: var(--accent); }
+
+  /* Section headers inside windows */
+  .section-header {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+
+  /* Company color dot in topbar */
+  #company-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  #company-name-topbar {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text2);
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     TOP BAR
+============================================================ -->
+<div id="topbar">
+  <div class="topbar-logo">⬡ SE</div>
+  <div id="company-dot"></div>
+  <span id="company-name-topbar">—</span>
+  <div class="topbar-sep"></div>
+
+  <div class="topbar-item">
+    <span class="topbar-label">Bank</span>
+    <span id="bank-value">$0</span>
+  </div>
+
+  <div class="topbar-sep"></div>
+
+  <button id="profit-btn" class="zero" title="Click for breakdown">$0/mo</button>
+
+  <div class="topbar-sep"></div>
+
+  <div class="topbar-item">
+    <span class="topbar-label">Date</span>
+    <span id="date-value">—</span>
+  </div>
+
+  <div class="time-controls">
+    <button class="time-btn" id="tb-pause" onclick="Game.time.setSpeed(0)">⏸</button>
+    <button class="time-btn active" id="tb-1x" onclick="Game.time.setSpeed(1)">1×</button>
+    <button class="time-btn" id="tb-2x" onclick="Game.time.setSpeed(2)">2×</button>
+    <button class="time-btn" id="tb-3x" onclick="Game.time.setSpeed(3)">3×</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     PROFIT POPUP
+============================================================ -->
+<div id="profit-popup">
+  <div class="profit-popup-title">💰 Monthly Financial Breakdown</div>
+  <div id="profit-popup-rows"></div>
+  <div class="profit-total">
+    <span>Net Profit</span>
+    <span id="profit-popup-total">$0</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     DESKTOP AREA
+============================================================ -->
+<div id="desktop-area">
+  <!-- Desktop icons (shown when game is active) -->
+  <div class="desktop-icons" id="desktop-icons" style="display:none">
+    <div class="desk-icon" ondblclick="App.open('hardware')">
+      <div class="icon-gfx">🔧</div>
+      <div class="icon-label">Create Hardware</div>
+    </div>
+    <div class="desk-icon" ondblclick="App.open('contracts')">
+      <div class="icon-gfx">📋</div>
+      <div class="icon-label">Contracts</div>
+    </div>
+    <div class="desk-icon" ondblclick="App.open('research')">
+      <div class="icon-gfx">🔬</div>
+      <div class="icon-label">Research</div>
+    </div>
+    <div class="desk-icon" ondblclick="App.open('production')">
+      <div class="icon-gfx">🏭</div>
+      <div class="icon-label">Production</div>
+    </div>
+    <div class="desk-icon" ondblclick="App.open('business')">
+      <div class="icon-gfx">🤝</div>
+      <div class="icon-label">Business</div>
+    </div>
+  </div>
+
+  <!-- Windows rendered here by JS -->
+</div>
+
+<!-- ============================================================
+     PAUSE OVERLAY
+============================================================ -->
+<div id="pause-overlay">PAUSED</div>
+
+<!-- ============================================================
+     TASKBAR
+============================================================ -->
+<div id="taskbar">
+  <button id="start-btn" onclick="UI.toggleStartMenu()">⬡ MENU</button>
+  <div class="taskbar-sep"></div>
+  <div id="taskbar-apps"></div>
+</div>
+
+<!-- ============================================================
+     START MENU
+============================================================ -->
+<div id="start-menu">
+  <div class="start-menu-title">Silicon Empire</div>
+  <div class="start-item" onclick="UI.openNewGameWindow(); UI.closeStartMenu()">🆕 New Game</div>
+  <div class="start-item" id="sm-resume" style="display:none" onclick="Game.time.resume(); UI.closeStartMenu()">▶ Resume</div>
+  <div class="start-item" id="sm-pause" style="display:none" onclick="Game.time.pause(); UI.closeStartMenu()">⏸ Pause Game</div>
+</div>
+
+<!-- ============================================================
+     NOTIFICATIONS
+============================================================ -->
+<div id="notifications"></div>
+
+<!-- ============================================================
+     OVERLAY
+============================================================ -->
+<div id="overlay" onclick="UI.closeOverlayWindows()"></div>
+
+<script>
+/* ================================================================
+   SILICON EMPIRE — Main Game Script
+   Architecture:
+     Game        — core state + loop
+     Game.time   — time/speed management
+     Game.finance— money, profit/loss tracking
+     Game.tech   — technology tree
+     Game.hw     — hardware projects & products
+     Game.contracts — contract system
+     Game.production — fab/production lines
+     UI          — window manager, DOM helpers
+     App         — app launcher (each app = self-contained module)
+   ================================================================ */
+
+/* ================================================================
+   UTILS
+   ================================================================ */
+const Utils = (() => {
+  function formatMoney(n, compact = false) {
+    const abs = Math.abs(n);
+    let str;
+    if (compact) {
+      if (abs >= 1e9) str = (n / 1e9).toFixed(2) + 'B';
+      else if (abs >= 1e6) str = (n / 1e6).toFixed(2) + 'M';
+      else if (abs >= 1e3) str = (n / 1e3).toFixed(1) + 'K';
+      else str = n.toFixed(0);
+    } else {
+      if (abs >= 1e9) str = (n / 1e9).toFixed(3) + 'B';
+      else if (abs >= 1e6) str = (n / 1e6).toFixed(2) + 'M';
+      else if (abs >= 1e3) str = (n / 1e3).toFixed(1) + 'K';
+      else str = n.toFixed(0);
+    }
+    return '$' + str;
+  }
+
+  function formatDate(daysSinceEpoch, startYear = 1990) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let d = Math.floor(daysSinceEpoch);
+    const year = startYear + Math.floor(d / 365);
+    const dayOfYear = d % 365;
+    const month = Math.floor(dayOfYear / 30.4);
+    const day = Math.floor(dayOfYear % 30.4) + 1;
+    return `${day} ${months[Math.min(month, 11)]} ${year}`;
+  }
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  function uuid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  return { formatMoney, formatDate, clamp, lerp, uuid };
+})();
+
+/* ================================================================
+   NOTIFICATION SYSTEM
+   ================================================================ */
+const Notify = (() => {
+  function show(msg, type = 'info', duration = 3500) {
+    const el = document.createElement('div');
+    el.className = `notif ${type}`;
+    el.textContent = msg;
+    document.getElementById('notifications').appendChild(el);
+    setTimeout(() => {
+      el.style.animation = 'notif-out 0.3s forwards';
+      setTimeout(() => el.remove(), 300);
+    }, duration);
+  }
+  return { show };
+})();
+
+/* ================================================================
+   GAME STATE
+   ================================================================ */
+const Game = (() => {
+  // ---- Core state ----
+  const state = {
+    started: false,
+    company: { name: '', founder: '', color: '#00d4ff', mode: 'CPU' },
+    difficulty: null,
+  };
+
+  // ---- TIME MODULE ----
+  const time = (() => {
+    let _speed = 1;     // 0 = paused
+    let _days  = 0;     // fractional days since start
+    let _last  = 0;
+    let _animId = null;
+    const SPEEDS = { 0: 0, 1: 0.5, 2: 1.0, 3: 2.0 }; // days per real second
+
+    function tick(ts) {
+      _animId = requestAnimationFrame(tick);
+      if (_last === 0) { _last = ts; return; }
+      const dt = Math.min((ts - _last) / 1000, 0.1); // cap at 100ms
+      _last = ts;
+      if (_speed > 0) {
+        const daysAdv = SPEEDS[_speed] * dt;
+        _days += daysAdv;
+        finance._onTick(daysAdv);
+        hw._onTick(daysAdv);
+        tech._onTick(daysAdv);
+        production._onTick(daysAdv);
+        contracts._onTick(daysAdv);
+        UI.updateTopBar();
+      }
+    }
+
+    function start() {
+      _last = 0;
+      _animId = requestAnimationFrame(tick);
+    }
+
+    function stop() {
+      if (_animId) cancelAnimationFrame(_animId);
+    }
+
+    function setSpeed(s) {
+      _speed = s;
+      const paused = s === 0;
+      document.getElementById('pause-overlay').classList.toggle('visible', paused);
+      document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+      const ids = { 0: 'tb-pause', 1: 'tb-1x', 2: 'tb-2x', 3: 'tb-3x' };
+      document.getElementById(ids[s])?.classList.add('active');
+      // update start menu
+      document.getElementById('sm-pause').style.display  = paused ? 'none' : 'block';
+      document.getElementById('sm-resume').style.display = paused ? 'block' : 'none';
+    }
+
+    function pause()  { setSpeed(0); }
+    function resume() { setSpeed(1); }
+
+    function getDays()     { return _days; }
+    function getSpeed()    { return _speed; }
+    function isPaused()    { return _speed === 0; }
+
+    return { start, stop, setSpeed, pause, resume, getDays, getSpeed, isPaused };
+  })();
+
+  // ---- FINANCE MODULE ----
+  const finance = (() => {
+    let _cash = 0;
+    let _dayAccum = 0; // accumulator for monthly ticks (30 days)
+
+    // income & expense streams: { id, label, amountPerMonth, type:'income'|'expense' }
+    const streams = [];
+
+    function addStream(id, label, amountPerMonth, type = 'income') {
+      const existing = streams.find(s => s.id === id);
+      if (existing) { existing.amountPerMonth = amountPerMonth; existing.label = label; return; }
+      streams.push({ id, label, amountPerMonth, type });
+    }
+
+    function removeStream(id) {
+      const idx = streams.findIndex(s => s.id === id);
+      if (idx >= 0) streams.splice(idx, 1);
+    }
+
+    function getMonthlyIncome()  { return streams.filter(s=>s.type==='income').reduce((a,s)=>a+s.amountPerMonth, 0); }
+    function getMonthlyExpense() { return streams.filter(s=>s.type==='expense').reduce((a,s)=>a+s.amountPerMonth, 0); }
+    function getMonthlyProfit()  { return getMonthlyIncome() - getMonthlyExpense(); }
+
+    function deposit(amount) { _cash += amount; }
+    function withdraw(amount){ _cash -= amount; }
+    function getCash()       { return _cash; }
+
+    function getStreams()    { return [...streams]; }
+
+    function _onTick(daysAdv) {
+      _dayAccum += daysAdv;
+      if (_dayAccum >= 30) {
+        _dayAccum -= 30;
+        const profit = getMonthlyProfit();
+        _cash += profit;
+        if (profit < 0 && _cash < 0) Notify.show('⚠ Negative cash! Take action!', 'warn');
+      }
+    }
+
+    function init(startCash) {
+      _cash = startCash;
+      _dayAccum = 0;
+      streams.length = 0;
+    }
+
+    return { init, deposit, withdraw, getCash, addStream, removeStream,
+             getMonthlyIncome, getMonthlyExpense, getMonthlyProfit, getStreams, _onTick };
+  })();
+
+  // ---- TECH MODULE ----
+  const tech = (() => {
+    // Tech tree definition
+    const TREE = [
+      // Process nodes (Foundry)
+      { id: 'proc_1000nm', name: '1000nm Process', cat: 'Foundry', x: 20, y: 20,
+        desc: 'Basic 1 micron manufacturing process.',
+        cost: 0, time: 0, prereqs: [], unlocked: true, unlocks: ['wafer_200mm','proc_800nm'] },
+      { id: 'proc_800nm',  name: '800nm Process',  cat: 'Foundry', x: 20, y: 100,
+        desc: '800nm shrink, improved density.',
+        cost: 500000, time: 180, prereqs: ['proc_1000nm'], unlocks: ['proc_600nm'] },
+      { id: 'proc_600nm',  name: '600nm Process',  cat: 'Foundry', x: 20, y: 180,
+        cost: 1200000, time: 270, prereqs: ['proc_800nm'], unlocks: ['proc_350nm'] },
+      { id: 'proc_350nm',  name: '350nm Process',  cat: 'Foundry', x: 20, y: 260,
+        cost: 3000000, time: 365, prereqs: ['proc_600nm'], unlocks: ['proc_250nm','wafer_300mm'] },
+      { id: 'proc_250nm',  name: '250nm Process',  cat: 'Foundry', x: 20, y: 340,
+        cost: 8000000, time: 400, prereqs: ['proc_350nm'], unlocks: ['proc_180nm'] },
+      { id: 'proc_180nm',  name: '180nm Process',  cat: 'Foundry', x: 20, y: 420,
+        cost: 20000000, time: 450, prereqs: ['proc_250nm'], unlocks: [] },
+
+      // Wafer sizes
+      { id: 'wafer_200mm', name: '200mm Wafer',    cat: 'Foundry', x: 160, y: 20,
+        desc: 'Standard 8-inch wafer.', cost: 0, time: 0, prereqs: ['proc_1000nm'], unlocked: true, unlocks: [] },
+      { id: 'wafer_300mm', name: '300mm Wafer',    cat: 'Foundry', x: 160, y: 260,
+        cost: 5000000, time: 300, prereqs: ['proc_350nm'], unlocks: [] },
+
+      // CPU Architecture
+      { id: 'arch_cisc_basic', name: 'CISC Basic', cat: 'Architecture', x: 320, y: 20,
+        cost: 0, time: 0, prereqs: [], unlocked: true, unlocks: ['arch_pipeline','arch_cisc_adv'] },
+      { id: 'arch_pipeline', name: 'Pipelining',   cat: 'Architecture', x: 320, y: 100,
+        cost: 300000, time: 120, prereqs: ['arch_cisc_basic'], unlocks: ['arch_superscalar'] },
+      { id: 'arch_superscalar', name: 'Superscalar', cat: 'Architecture', x: 320, y: 180,
+        cost: 1000000, time: 200, prereqs: ['arch_pipeline'], unlocks: ['arch_ooo'] },
+      { id: 'arch_ooo', name: 'Out-of-Order Exec', cat: 'Architecture', x: 320, y: 260,
+        cost: 3000000, time: 300, prereqs: ['arch_superscalar'], unlocks: [] },
+      { id: 'arch_cisc_adv', name: 'Advanced CISC', cat: 'Architecture', x: 460, y: 20,
+        cost: 500000, time: 150, prereqs: ['arch_cisc_basic'], unlocks: ['arch_mmx'] },
+      { id: 'arch_mmx', name: 'MMX / SIMD',        cat: 'Architecture', x: 460, y: 100,
+        cost: 1500000, time: 180, prereqs: ['arch_cisc_adv'], unlocks: [] },
+
+      // GPU
+      { id: 'gpu_basic', name: 'Basic GPU Core',   cat: 'GPU', x: 600, y: 20,
+        cost: 5000000, time: 365, prereqs: ['arch_pipeline'], unlocks: ['gpu_3d'] },
+      { id: 'gpu_3d', name: '3D Rendering Pipeline', cat: 'GPU', x: 600, y: 100,
+        cost: 15000000, time: 450, prereqs: ['gpu_basic'], unlocks: [] },
+
+      // Cache
+      { id: 'cache_l1', name: 'L1 Cache', cat: 'CPU', x: 320, y: 340,
+        cost: 200000, time: 90, prereqs: ['arch_cisc_basic'], unlocked: true, unlocks: ['cache_l2'] },
+      { id: 'cache_l2', name: 'L2 Cache', cat: 'CPU', x: 320, y: 420,
+        cost: 800000, time: 180, prereqs: ['cache_l1'], unlocks: [] },
+    ];
+
+    const researched = new Set(['proc_1000nm', 'wafer_200mm', 'arch_cisc_basic', 'cache_l1']);
+    const inProgress = new Map(); // id -> { daysLeft, effortPct, costPerDay }
+    let _dayAccum = 0;
+
+    function isResearched(id) { return researched.has(id); }
+    function isAvailable(id) {
+      const t = TREE.find(n => n.id === id);
+      if (!t) return false;
+      if (t.unlocked) return true;
+      return t.prereqs.every(p => researched.has(p));
+    }
+
+    function startResearch(id, effortPct = 100) {
+      const t = TREE.find(n => n.id === id);
+      if (!t || researched.has(id) || inProgress.has(id)) return false;
+      if (!isAvailable(id)) return false;
+      const effort = Utils.clamp(effortPct, 10, 300) / 100;
+      const timeScale = 1 / effort;
+      const costScale = effort;
+      const daysLeft = t.time * timeScale;
+      const costPerDay = t.cost > 0 ? (t.cost * costScale) / daysLeft : 0;
+      inProgress.set(id, { daysLeft, costPerDay, effortPct });
+      return true;
+    }
+
+    function _onTick(daysAdv) {
+      for (const [id, prog] of inProgress) {
+        finance.withdraw(prog.costPerDay * daysAdv);
+        prog.daysLeft -= daysAdv;
+        if (prog.daysLeft <= 0) {
+          inProgress.delete(id);
+          researched.add(id);
+          const t = TREE.find(n => n.id === id);
+          Notify.show(`✅ Research complete: ${t?.name}`, 'success');
+        }
+      }
+    }
+
+    function getTree()       { return TREE; }
+    function getInProgress() { return inProgress; }
+    function getResearched() { return researched; }
+    function getNode(id)     { return TREE.find(n => n.id === id); }
+
+    // What process nodes are researched?
+    function getAvailableProcesses() {
+      return TREE.filter(n => n.cat === 'Foundry' && n.id.startsWith('proc_') && researched.has(n.id))
+                 .map(n => n.id.replace('proc_','').replace('nm','') + 'nm');
+    }
+
+    function getMaxFreq() {
+      // Frequency unlocked by process node
+      const processMap = { '1000nm': 33, '800nm': 66, '600nm': 100, '350nm': 200, '250nm': 300, '180nm': 500 };
+      let max = 33;
+      for (const [pid] of Object.entries(processMap)) {
+        const nodeId = 'proc_' + pid.replace('nm','') + 'nm';
+        if (researched.has(nodeId)) max = processMap[pid];
+      }
+      return max;
+    }
+
+    return { getTree, getInProgress, getResearched, getNode, isResearched, isAvailable,
+             startResearch, getAvailableProcesses, getMaxFreq, _onTick };
+  })();
+
+  // ---- HARDWARE MODULE ----
+  const hw = (() => {
+    const projects  = []; // { id, name, type, config, progress, totalDays, cost, startDay }
+    const products  = []; // { id, name, type, config, stats, contracts:[] }
+
+    function _calcCpuStats(cfg) {
+      const processScale = { '1000nm': 1.0, '800nm': 1.3, '600nm': 1.6, '350nm': 2.2, '250nm': 3.0, '180nm': 4.0 };
+      const densityScale = { 'Low': 0.7, 'Standard': 1.0, 'High': 1.4, 'Ultra': 1.8 };
+      const ps = processScale[cfg.process]    || 1.0;
+      const ds = densityScale[cfg.density]    || 1.0;
+      const freq = cfg.overclock ? cfg.frequency * 1.1 : cfg.frequency;
+      const mips = Math.round(freq * ps * ds * 0.8);
+      const ipc  = +(ps * ds * 0.6).toFixed(2);
+      const tdp  = Math.round(freq * (cfg.overclock ? 1.25 : 1.0) * (1 / ps) * 15);
+      const reliability = Utils.clamp(Math.round(90 - (cfg.overclock ? 15 : 0) - (ds - 1) * 10), 40, 99);
+      const unitCost = Math.round(freq * ds * (1 / ps) * 3.5 + 20);
+      const devDays = Math.round(60 + freq / 10 + ds * 20);
+      const devCost = devDays * 5000;
+      const temp = Math.round(30 + tdp * 0.4 + (cfg.overclock ? 15 : 0));
+      return { mips, ipc, tdp, reliability, unitCost, devDays, devCost, temp };
+    }
+
+    function createCpu(cfg) {
+      const stats = _calcCpuStats(cfg);
+      const project = {
+        id: Utils.uuid(),
+        name: cfg.name,
+        type: 'CPU',
+        config: { ...cfg },
+        stats,
+        progress: 0,
+        totalDays: stats.devDays,
+        startDay: Game.time.getDays(),
+      };
+      finance.withdraw(stats.devCost * 0.1); // 10% upfront
+      projects.push(project);
+      Notify.show(`🔧 Started development: ${cfg.name}`, 'info');
+      return project;
+    }
+
+    function _onTick(daysAdv) {
+      for (let i = projects.length - 1; i >= 0; i--) {
+        const p = projects[i];
+        p.progress += daysAdv;
+        if (p.progress >= p.totalDays) {
+          const product = {
+            id: Utils.uuid(),
+            name: p.name,
+            type: p.type,
+            config: p.config,
+            stats: p.stats,
+            contracts: [],
+            retired: false,
+          };
+          products.push(product);
+          projects.splice(i, 1);
+          Notify.show(`✅ ${p.type} "${p.name}" development complete!`, 'success');
+        }
+      }
+    }
+
+    function getProjects() { return projects; }
+    function getProducts() { return products; }
+    function calcCpuStats(cfg) { return _calcCpuStats(cfg); }
+
+    return { createCpu, getProjects, getProducts, calcCpuStats, _onTick };
+  })();
+
+  // ---- CONTRACTS MODULE ----
+  const contracts = (() => {
+    const available = []; // generated contracts
+    const active    = []; // accepted contracts
+    let _nextSpawn = 30;
+    let _dayAccum  = 0;
+
+    const COMPANIES = ['TurboSystems','DataVault Inc','NovaTech','SwiftComp','GlobalDyne',
+                       'Apex Hardware','DigitalCore','ByteForge','InfoStar','CompuMax'];
+
+    function _generateContract() {
+      const company = COMPANIES[Math.floor(Math.random() * COMPANIES.length)];
+      const minMips = Math.floor(Math.random() * 500 + 50);
+      const qty = Math.floor(Math.random() * 5000 + 500);
+      const pricePerUnit = Math.round(minMips * 0.4 + 30 + Math.random() * 50);
+      return {
+        id: Utils.uuid(),
+        company,
+        minMips,
+        qty,
+        pricePerUnit,
+        monthlyRevenue: pricePerUnit * qty / 12,
+        durationDays: 365,
+        description: `Need ${qty.toLocaleString()} CPUs with ≥${minMips} MIPS`,
+      };
+    }
+
+    function _onTick(daysAdv) {
+      _dayAccum += daysAdv;
+      if (_dayAccum >= _nextSpawn) {
+        _dayAccum = 0;
+        _nextSpawn = Math.random() * 30 + 15;
+        if (available.length < 8) available.push(_generateContract());
+      }
+      for (let i = active.length - 1; i >= 0; i--) {
+        const c = active[i];
+        c.daysLeft -= daysAdv;
+        if (c.daysLeft <= 0) {
+          finance.removeStream('contract_' + c.id);
+          active.splice(i, 1);
+          Notify.show(`📋 Contract with ${c.company} completed`, 'info');
+        }
+      }
+    }
+
+    function accept(contractId, productId) {
+      const idx = available.findIndex(c => c.id === contractId);
+      if (idx < 0) return false;
+      const c = available.splice(idx, 1)[0];
+      const product = hw.getProducts().find(p => p.id === productId);
+      if (!product || product.stats.mips < c.minMips) {
+        Notify.show('Product does not meet contract specs!', 'error');
+        available.splice(idx, 0, c); // put back
+        return false;
+      }
+      c.daysLeft = c.durationDays;
+      c.productId = productId;
+      active.push(c);
+      finance.addStream('contract_' + c.id, `Contract: ${c.company}`, c.monthlyRevenue, 'income');
+      Notify.show(`✅ Contract accepted: ${c.company} — ${Utils.formatMoney(c.monthlyRevenue)}/mo`, 'success');
+      return true;
+    }
+
+    function retireProduct(productId) {
+      const affectedContracts = active.filter(c => c.productId === productId);
+      for (const c of affectedContracts) {
+        const pctDone = (c.durationDays - c.daysLeft) / c.durationDays;
+        const fine = c.monthlyRevenue * 12 * (1 - pctDone) * 0.5;
+        finance.withdraw(fine);
+        finance.removeStream('contract_' + c.id);
+        const aIdx = active.indexOf(c);
+        if (aIdx >= 0) active.splice(aIdx, 1);
+        Notify.show(`⚠ Fined ${Utils.formatMoney(fine)} for retiring ${c.company} contract early`, 'warn');
+      }
+    }
+
+    function getAvailable() { return available; }
+    function getActive()    { return active; }
+
+    return { _onTick, accept, retireProduct, getAvailable, getActive };
+  })();
+
+  // ---- PRODUCTION MODULE ----
+  const production = (() => {
+    const fabs = []; // { id, name, waferSize, lines, capacity, utilization, upgradingLines }
+
+    function buildFab(cfg) {
+      // cfg: { name, waferSize, lines }
+      const costPerLine = cfg.waferSize === '300mm' ? 50000000 : 5000000;
+      const totalCost   = costPerLine * cfg.lines;
+      if (finance.getCash() < totalCost) {
+        Notify.show('Insufficient funds for fab!', 'error'); return false;
+      }
+      finance.withdraw(totalCost);
+      const fab = {
+        id: Utils.uuid(),
+        name: cfg.name,
+        waferSize: cfg.waferSize,
+        lines: cfg.lines,
+        capacity: cfg.lines * 1000,
+        utilization: 0,
+        opCostPerMonth: cfg.lines * 200000,
+      };
+      fabs.push(fab);
+      finance.addStream('fab_ops_' + fab.id, `Fab ops: ${fab.name}`, fab.opCostPerMonth, 'expense');
+      Notify.show(`🏭 Fab "${fab.name}" built with ${cfg.lines} production lines`, 'success');
+      return fab;
+    }
+
+    function getFabs() { return fabs; }
+
+    function _onTick(daysAdv) {
+      // Future: update fab utilization based on contract demand
+    }
+
+    return { buildFab, getFabs, _onTick };
+  })();
+
+  // ---- INIT ----
+  function newGame(opts) {
+    // opts: { companyName, founderName, color, difficulty, mode, startYear }
+    const DIFFICULTIES = {
+      'Noob':    { cash: 250_000_000, salesMult: 2.0 },
+      'Easy':    { cash: 10_000_000,  salesMult: 1.5 },
+      'Normal':  { cash: 250_000,     salesMult: 1.0 },
+      'Hard':    { cash: 100_000,     salesMult: 0.75 },
+      'Extreme': { cash: 50_000,      salesMult: 0.5 },
+    };
+
+    const diff = DIFFICULTIES[opts.difficulty] || DIFFICULTIES['Normal'];
+    state.company  = { name: opts.companyName, founder: opts.founderName, color: opts.color, mode: opts.mode };
+    state.difficulty = opts.difficulty;
+    state.started  = true;
+    state._startYear = parseInt(opts.startYear) || 1990;
+    state._salesMult = diff.salesMult;
+
+    finance.init(diff.cash);
+    // Base operating cost
+    finance.addStream('base_ops', 'Office & Salaries', 10000, 'expense');
+
+    // Update company color
+    document.getElementById('company-dot').style.background = opts.color;
+    document.getElementById('company-name-topbar').textContent = opts.companyName;
+
+    time.start();
+    time.setSpeed(1);
+
+    document.getElementById('desktop-icons').style.display = 'flex';
+    document.getElementById('sm-pause').style.display = 'block';
+    document.getElementById('sm-resume').style.display = 'none';
+
+    Notify.show(`Welcome to ${opts.companyName}! Good luck, ${opts.founderName}!`, 'success', 5000);
+
+    // Spawn Projects panel
+    UI.openProjectsPanel();
+  }
+
+  return { state, time, finance, tech, hw, contracts, production, newGame };
+})();
+
+/* ================================================================
+   WINDOW MANAGER (UI)
+   ================================================================ */
+const UI = (() => {
+  let _zTop = 100;
+  const _windows = new Map(); // id -> { el, taskbarBtn }
+  let _startMenuOpen = false;
+  let _profitOpen = false;
+  let _dragging = null;
+  let _resizing = null;
+
+  // ---- Top Bar Update ----
+  function updateTopBar() {
+    const cash   = Game.finance.getCash();
+    const profit = Game.finance.getMonthlyProfit();
+    const days   = Game.time.getDays();
+    const yr     = Game.state._startYear || 1990;
+
+    const bankEl = document.getElementById('bank-value');
+    bankEl.textContent = Utils.formatMoney(cash, true);
+    bankEl.className   = cash < 0 ? 'negative' : '';
+
+    const profBtn = document.getElementById('profit-btn');
+    profBtn.textContent = Utils.formatMoney(profit, true) + '/mo';
+    profBtn.className   = profit > 0 ? 'pos' : profit < 0 ? 'neg' : 'zero';
+
+    document.getElementById('date-value').textContent = Utils.formatDate(days, yr);
+
+    if (_profitOpen) _renderProfitPopup();
+  }
+
+  // ---- Profit Popup ----
+  function _renderProfitPopup() {
+    const streams = Game.finance.getStreams();
+    const rows = streams.map(s => {
+      const cls = s.type === 'income' ? 'pos' : 'neg';
+      const sign = s.type === 'income' ? '+' : '-';
+      return `<div class="profit-row">
+        <span class="label">${s.label}</span>
+        <span class="val ${cls}">${sign}${Utils.formatMoney(s.amountPerMonth, true)}</span>
+      </div>`;
+    }).join('');
+    document.getElementById('profit-popup-rows').innerHTML = rows || '<div style="color:var(--text2);font-size:11px;padding:4px 0">No streams yet</div>';
+    const net = Game.finance.getMonthlyProfit();
+    const totEl = document.getElementById('profit-popup-total');
+    totEl.textContent = Utils.formatMoney(net, true) + '/mo';
+    totEl.style.color = net > 0 ? 'var(--green)' : net < 0 ? 'var(--red)' : 'var(--grey)';
+  }
+
+  document.getElementById('profit-btn').addEventListener('click', () => {
+    _profitOpen = !_profitOpen;
+    document.getElementById('profit-popup').classList.toggle('visible', _profitOpen);
+    if (_profitOpen) _renderProfitPopup();
+  });
+
+  // ---- Start Menu ----
+  function toggleStartMenu() {
+    _startMenuOpen = !_startMenuOpen;
+    document.getElementById('start-menu').classList.toggle('visible', _startMenuOpen);
+  }
+
+  function closeStartMenu() {
+    _startMenuOpen = false;
+    document.getElementById('start-menu').classList.remove('visible');
+  }
+
+  document.addEventListener('mousedown', e => {
+    if (!e.target.closest('#start-menu') && !e.target.closest('#start-btn')) closeStartMenu();
+    if (!e.target.closest('#profit-popup') && !e.target.closest('#profit-btn')) {
+      _profitOpen = false;
+      document.getElementById('profit-popup').classList.remove('visible');
+    }
+  });
+
+  // ---- Overlay ----
+  function showOverlay() { document.getElementById('overlay').classList.add('visible'); }
+  function hideOverlay() { document.getElementById('overlay').classList.remove('visible'); }
+  function closeOverlayWindows() {
+    // Close any modal-style windows
+    hideOverlay();
+  }
+
+  // ---- Window Factory ----
+  function createWindow(opts) {
+    // opts: { id, title, width, height, x, y, resizable, closable, modal, content }
+    const id = opts.id || Utils.uuid();
+    if (_windows.has(id)) {
+      focusWindow(id);
+      return _windows.get(id).el;
+    }
+
+    const area = document.getElementById('desktop-area');
+    const aW = area.offsetWidth, aH = area.offsetHeight;
+
+    const el = document.createElement('div');
+    el.className = 'window focused';
+    el.id = 'win_' + id;
+    el.style.width  = (opts.width  || 500) + 'px';
+    el.style.height = (opts.height || 400) + 'px';
+    el.style.left   = (opts.x ?? Math.random() * Math.max(0, aW - (opts.width||500))) + 'px';
+    el.style.top    = (opts.y ?? Math.random() * Math.max(0, aH - (opts.height||400))) + 'px';
+    el.style.zIndex = ++_zTop;
+
+    const closeBtn = opts.closable !== false
+      ? `<button class="win-btn close" onclick="UI.closeWindow('${id}')">✕</button>` : '';
+    const minBtn   = `<button class="win-btn" onclick="UI.minimizeWindow('${id}')">─</button>`;
+
+    el.innerHTML = `
+      <div class="win-header">
+        <span class="win-title">${opts.title || 'Window'}</span>
+        <div class="win-controls">${minBtn}${closeBtn}</div>
+      </div>
+      <div class="win-body" id="winbody_${id}">${opts.content || ''}</div>
+      ${opts.resizable !== false ? '<div class="win-resize"></div>' : ''}
+    `;
+
+    area.appendChild(el);
+    _setupDrag(el, id);
+    if (opts.resizable !== false) _setupResize(el, id);
+
+    // Taskbar button
+    const tbApps = document.getElementById('taskbar-apps');
+    const btn = document.createElement('button');
+    btn.className = 'taskbar-app-btn active';
+    btn.textContent = opts.title || 'Window';
+    btn.id = 'taskbarbtn_' + id;
+    btn.onclick = () => toggleWindow(id);
+    tbApps.appendChild(btn);
+
+    _windows.set(id, { el, taskbarBtn: btn, minimized: false });
+
+    if (opts.modal) showOverlay();
+
+    el.addEventListener('mousedown', () => focusWindow(id));
+
+    return el;
+  }
+
+  function focusWindow(id) {
+    document.querySelectorAll('.window').forEach(w => w.classList.remove('focused'));
+    const info = _windows.get(id);
+    if (info) {
+      info.el.style.zIndex = ++_zTop;
+      info.el.classList.add('focused');
+      info.taskbarBtn.classList.add('active');
+    }
+  }
+
+  function closeWindow(id) {
+    const info = _windows.get(id);
+    if (!info) return;
+    info.el.remove();
+    info.taskbarBtn.remove();
+    _windows.delete(id);
+    hideOverlay();
+  }
+
+  function minimizeWindow(id) {
+    const info = _windows.get(id);
+    if (!info) return;
+    info.minimized = !info.minimized;
+    info.el.style.display = info.minimized ? 'none' : 'flex';
+    info.taskbarBtn.classList.toggle('active', !info.minimized);
+  }
+
+  function toggleWindow(id) {
+    const info = _windows.get(id);
+    if (!info) return;
+    if (info.minimized) { minimizeWindow(id); focusWindow(id); }
+    else {
+      const focused = info.el.classList.contains('focused');
+      if (focused) minimizeWindow(id);
+      else focusWindow(id);
+    }
+  }
+
+  function getWindowBody(id) {
+    return document.getElementById('winbody_' + id);
+  }
+
+  function _setupDrag(el, id) {
+    const header = el.querySelector('.win-header');
+    header.addEventListener('mousedown', e => {
+      if (e.target.closest('.win-controls')) return;
+      e.preventDefault();
+      const startX = e.clientX - el.offsetLeft;
+      const startY = e.clientY - el.offsetTop;
+      focusWindow(id);
+      _dragging = { el, startX, startY };
+    });
+  }
+
+  function _setupResize(el, id) {
+    const handle = el.querySelector('.win-resize');
+    if (!handle) return;
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      const startW = el.offsetWidth, startH = el.offsetHeight;
+      const startX = e.clientX, startY = e.clientY;
+      _resizing = { el, startW, startH, startX, startY };
+    });
+  }
+
+  document.addEventListener('mousemove', e => {
+    if (_dragging) {
+      const area = document.getElementById('desktop-area').getBoundingClientRect();
+      const newX = Utils.clamp(e.clientX - _dragging.startX, 0, area.width - 100);
+      const newY = Utils.clamp(e.clientY - _dragging.startY, 0, area.height - 30);
+      _dragging.el.style.left = newX + 'px';
+      _dragging.el.style.top  = newY + 'px';
+    }
+    if (_resizing) {
+      const dX = e.clientX - _resizing.startX;
+      const dY = e.clientY - _resizing.startY;
+      _resizing.el.style.width  = Math.max(280, _resizing.startW + dX) + 'px';
+      _resizing.el.style.height = Math.max(160, _resizing.startH + dY) + 'px';
+    }
+  });
+
+  document.addEventListener('mouseup', () => { _dragging = null; _resizing = null; });
+
+  // ---- Projects Panel (always-open borderless) ----
+  function openProjectsPanel() {
+    if (_windows.has('projects')) return;
+    const el = createWindow({
+      id: 'projects',
+      title: '📦 Projects & Products',
+      width: 240,
+      height: 320,
+      x: window.innerWidth - 260,
+      y: window.innerHeight - 420,
+      resizable: true,
+      closable: false,
+    });
+    el.classList.add('borderless');
+    _renderProjectsPanel();
+    // Auto-refresh
+    setInterval(_renderProjectsPanel, 1000);
+  }
+
+  function _renderProjectsPanel() {
+    const body = getWindowBody('projects');
+    if (!body) return;
+    const projects = Game.hw.getProjects();
+    const products  = Game.hw.getProducts();
+
+    const projHTML = projects.length ? projects.map(p => {
+      const pct = Math.min(100, Math.round((p.progress / p.totalDays) * 100));
+      const daysLeft = Math.max(0, Math.round(p.totalDays - p.progress));
+      return `<div class="project-card">
+        <div class="project-card-header">
+          <span class="project-card-title">${p.name}</span>
+          <span class="project-badge badge-progress">${p.type}</span>
+        </div>
+        <div class="project-meta">
+          <span>${pct}%</span>
+          <span>~${daysLeft}d left</span>
+          <span>${Utils.formatMoney(p.stats.unitCost)}/unit</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+    }).join('') : '<div style="color:var(--text2);font-size:11px;padding:4px 0">No active projects</div>';
+
+    const prodHTML = products.length ? products.map(p => {
+      const activeContracts = Game.contracts.getActive().filter(c => c.productId === p.id).length;
+      return `<div class="project-card">
+        <div class="project-card-header">
+          <span class="project-card-title">${p.name}</span>
+          <span class="project-badge badge-done">${p.type}</span>
+        </div>
+        <div class="project-meta">
+          <span>${p.stats.mips} MIPS</span>
+          <span>${p.stats.tdp}W TDP</span>
+          <span>${activeContracts} contracts</span>
+        </div>
+      </div>`;
+    }).join('') : '<div style="color:var(--text2);font-size:11px;padding:4px 0">No products yet</div>';
+
+    body.innerHTML = `
+      <div class="tabs">
+        <div class="tab-btn active" onclick="UI._switchTab(this,'proj-tab')">Projects</div>
+        <div class="tab-btn" onclick="UI._switchTab(this,'prod-tab')">Products</div>
+      </div>
+      <div id="proj-tab" class="tab-pane active">${projHTML}</div>
+      <div id="prod-tab" class="tab-pane">${prodHTML}</div>
+    `;
+  }
+
+  function _switchTab(btn, tabId) {
+    const parent = btn.closest('.win-body') || btn.closest('#winbody_projects');
+    const allBtns = btn.parentElement.querySelectorAll('.tab-btn');
+    allBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // find panes in same body
+    const scope = btn.closest('.win-body');
+    if (scope) {
+      scope.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      const target = scope.querySelector('#' + tabId);
+      if (target) target.classList.add('active');
+    }
+  }
+
+  // ---- New Game Window ----
+  function openNewGameWindow() {
+    const COLORS = ['#00d4ff','#ff6b35','#a855f7','#22c55e','#f59e0b','#ec4899','#14b8a6','#f43f5e'];
+
+    const el = createWindow({
+      id: 'newgame',
+      title: '🆕 New Company',
+      width: 480,
+      height: 580,
+      x: (window.innerWidth - 480) / 2,
+      y: (window.innerHeight - 580) / 2,
+      resizable: false,
+    });
+
+    showOverlay();
+
+    const body = getWindowBody('newgame');
+    body.innerHTML = `
+      <div class="section-header">Company Setup</div>
+
+      <div class="form-group">
+        <label class="form-label">Company Name</label>
+        <input type="text" class="form-input" id="ng-company" placeholder="e.g. SiliconWave Corp" maxlength="30">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Founder's Name</label>
+        <input type="text" class="form-input" id="ng-founder" placeholder="Your name" maxlength="30">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Company Color</label>
+        <div class="color-row" id="ng-colors">
+          ${COLORS.map((c,i) => `<div class="color-swatch${i===0?' selected':''}" style="background:${c}" data-color="${c}" onclick="UI._selectColor(this)"></div>`).join('')}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Starting Year</label>
+        <select class="form-select" id="ng-year">
+          ${[1980,1985,1990,1993,1995,1998,2000].map(y=>`<option value="${y}"${y===1990?' selected':''}>${y}</option>`).join('')}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Game Mode</label>
+        <div class="mode-options">
+          <div class="mode-option selected" data-mode="CPU" onclick="UI._selectMode(this)"><span class="mode-icon">💾</span>CPU</div>
+          <div class="mode-option" data-mode="Architecture" onclick="UI._selectMode(this)"><span class="mode-icon">⚙️</span>Architecture</div>
+          <div class="mode-option" data-mode="Foundry" onclick="UI._selectMode(this)"><span class="mode-icon">🏭</span>Foundry</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Difficulty</label>
+        <div class="diff-options">
+          ${[
+            {d:'Noob',    info:'$250M  ·  2.0× sales'},
+            {d:'Easy',    info:'$10M   ·  1.5× sales'},
+            {d:'Normal',  info:'$250K  ·  1.0× sales'},
+            {d:'Hard',    info:'$100K  ·  0.75× sales'},
+            {d:'Extreme', info:'$50K   ·  0.5× sales'},
+          ].map(({d,info}) => `
+            <div class="diff-option${d==='Normal'?' selected':''}" data-diff="${d}" onclick="UI._selectDiff(this)">
+              <span class="diff-name">${d}</span>
+              <span class="diff-info">${info}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" onclick="UI.closeWindow('newgame')">Cancel</button>
+        <button class="btn primary" onclick="UI._startNewGame()">▶ Start Game</button>
+      </div>
+    `;
+  }
+
+  function _selectColor(el) {
+    document.querySelectorAll('#ng-colors .color-swatch').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function _selectMode(el) {
+    document.querySelectorAll('.mode-option').forEach(m => m.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function _selectDiff(el) {
+    document.querySelectorAll('.diff-option').forEach(d => d.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function _startNewGame() {
+    const company  = document.getElementById('ng-company')?.value.trim();
+    const founder  = document.getElementById('ng-founder')?.value.trim();
+    const color    = document.querySelector('#ng-colors .color-swatch.selected')?.dataset.color || '#00d4ff';
+    const year     = document.getElementById('ng-year')?.value || '1990';
+    const mode     = document.querySelector('.mode-option.selected')?.dataset.mode || 'CPU';
+    const diff     = document.querySelector('.diff-option.selected')?.dataset.diff || 'Normal';
+
+    if (!company) { Notify.show('Enter a company name!', 'error'); return; }
+    if (!founder) { Notify.show('Enter your name!', 'error'); return; }
+
+    closeWindow('newgame');
+    hideOverlay();
+    Game.newGame({ companyName: company, founderName: founder, color, startYear: year, mode, difficulty: diff });
+  }
+
+  return {
+    updateTopBar, toggleStartMenu, closeStartMenu,
+    showOverlay, hideOverlay, closeOverlayWindows,
+    createWindow, closeWindow, minimizeWindow, focusWindow, getWindowBody,
+    openNewGameWindow, openProjectsPanel, _renderProjectsPanel,
+    _selectColor, _selectMode, _selectDiff, _startNewGame, _switchTab,
+  };
+})();
+
+/* ================================================================
+   APP LAUNCHER
+   ================================================================ */
+const App = (() => {
+
+  // ---- CREATE HARDWARE APP ----
+  function openHardware() {
+    const el = UI.createWindow({
+      id: 'hardware',
+      title: '🔧 Create Hardware',
+      width: 440,
+      height: 380,
+    });
+    const body = UI.getWindowBody('hardware');
+    body.innerHTML = `
+      <div class="section-header">Select Hardware Type</div>
+      <div class="hw-type-grid">
+        <div class="hw-type-card" onclick="App._openCpuCreator()">
+          <span class="hw-icon">💾</span>
+          <div class="hw-name">CPU</div>
+          <div class="hw-desc">Central Processing Unit</div>
+        </div>
+        <div class="hw-type-card locked" title="Requires GPU research">
+          <span class="hw-icon">🎮</span>
+          <div class="hw-name">GPU</div>
+          <div class="hw-desc">Requires Research</div>
+        </div>
+        <div class="hw-type-card locked" title="Coming soon">
+          <span class="hw-icon">🧩</span>
+          <div class="hw-name">Chipset</div>
+          <div class="hw-desc">Coming soon</div>
+        </div>
+        <div class="hw-type-card locked" title="Coming soon">
+          <span class="hw-icon">🔌</span>
+          <div class="hw-name">Controller</div>
+          <div class="hw-desc">Coming soon</div>
+        </div>
+      </div>
+    `;
+    // Unlock GPU if researched
+    if (Game.tech.isResearched('gpu_basic')) {
+      body.querySelectorAll('.hw-type-card')[1].classList.remove('locked');
+      body.querySelectorAll('.hw-type-card')[1].removeAttribute('title');
+      body.querySelectorAll('.hw-type-card')[1].onclick = () => Notify.show('GPU creator coming soon!', 'info');
+    }
+  }
+
+  function _openCpuCreator() {
+    UI.closeWindow('hardware');
+
+    const processes = Game.tech.getAvailableProcesses();
+    const maxFreq   = Game.tech.getMaxFreq();
+    const hasPipeline = Game.tech.isResearched('arch_pipeline');
+    const hasL2 = Game.tech.isResearched('cache_l2');
+
+    const el = UI.createWindow({
+      id: 'cpu_creator',
+      title: '💾 Design CPU',
+      width: 600,
+      height: 580,
+    });
+
+    const body = UI.getWindowBody('cpu_creator');
+    body.innerHTML = `
+      <div class="cpu-config-grid">
+        <div>
+          <div class="form-group">
+            <label class="form-label">CPU Name</label>
+            <input type="text" class="form-input" id="cpu-name" placeholder="e.g. Turbo-X 486" maxlength="24">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Process Node</label>
+            <select class="form-select" id="cpu-process" onchange="App._recalcCpu()">
+              ${processes.map(p => `<option value="${p}">${p}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Silicon Density</label>
+            <select class="form-select" id="cpu-density" onchange="App._recalcCpu()">
+              <option value="Low">Low</option>
+              <option value="Standard" selected>Standard</option>
+              ${hasPipeline ? '<option value="High">High</option>' : ''}
+              ${hasL2 ? '<option value="Ultra">Ultra</option>' : ''}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Frequency (MHz): <span id="freq-val">${Math.min(maxFreq, 33)}</span></label>
+            <input type="range" class="form-input" id="cpu-freq" min="1" max="${maxFreq}" value="${Math.min(maxFreq, 33)}" oninput="document.getElementById('freq-val').textContent=this.value;App._recalcCpu()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cache</label>
+            <select class="form-select" id="cpu-cache" onchange="App._recalcCpu()">
+              <option value="8">8 KB L1</option>
+              <option value="16" selected>16 KB L1</option>
+              <option value="32">32 KB L1</option>
+              ${hasL2 ? '<option value="64">64 KB L2</option><option value="128">128 KB L2</option>' : ''}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">RAM Controller</label>
+            <select class="form-select" id="cpu-ram">
+              <option value="external">External</option>
+              <option value="internal">Internal</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-check"><input type="checkbox" id="cpu-oc" onchange="App._recalcCpu()"> Enable Overclocking (+10% freq, ↑ temp/instability)</label>
+          </div>
+        </div>
+
+        <div>
+          <div class="stat-preview">
+            <div class="stat-preview-title">📊 Estimated Stats</div>
+            <div class="stat-grid" id="cpu-stats-preview">
+              <div class="stat-item"><span class="s-label">MIPS</span><span class="s-value" id="s-mips">—</span></div>
+              <div class="stat-item"><span class="s-label">IPC</span><span class="s-value" id="s-ipc">—</span></div>
+              <div class="stat-item"><span class="s-label">TDP</span><span class="s-value" id="s-tdp">—</span></div>
+              <div class="stat-item"><span class="s-label">Temp °C</span><span class="s-value" id="s-temp">—</span></div>
+              <div class="stat-item"><span class="s-label">Reliability</span><span class="s-value" id="s-rel">—</span></div>
+              <div class="stat-item"><span class="s-label">Unit Cost</span><span class="s-value" id="s-ucost">—</span></div>
+              <div class="stat-item"><span class="s-label">Dev Time</span><span class="s-value" id="s-dtime">—</span></div>
+              <div class="stat-item"><span class="s-label">Dev Cost</span><span class="s-value" id="s-dcost">—</span></div>
+            </div>
+          </div>
+
+          <div class="stat-preview" style="margin-top:8px">
+            <div class="stat-preview-title">💡 Cooler</div>
+            <select class="form-select" id="cpu-cooler" onchange="App._recalcCpu()">
+              <option value="stock">Stock Fan</option>
+              <option value="tower">Tower Cooler</option>
+              <option value="liquid">Liquid Cooling</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" onclick="UI.closeWindow('cpu_creator')">Cancel</button>
+        <button class="btn primary" onclick="App._submitCpu()">🔧 Begin Development</button>
+      </div>
+    `;
+    _recalcCpu();
+  }
+
+  function _recalcCpu() {
+    const process  = document.getElementById('cpu-process')?.value;
+    const density  = document.getElementById('cpu-density')?.value;
+    const freq     = parseInt(document.getElementById('cpu-freq')?.value || 33);
+    const overclock= document.getElementById('cpu-oc')?.checked;
+    const cooler   = document.getElementById('cpu-cooler')?.value;
+
+    if (!process) return;
+    const cfg = { process, density, frequency: freq, overclock };
+    const s = Game.hw.calcCpuStats(cfg);
+
+    const coolBonus = cooler === 'liquid' ? -20 : cooler === 'tower' ? -10 : 0;
+
+    document.getElementById('s-mips').textContent = s.mips;
+    document.getElementById('s-ipc').textContent  = s.ipc;
+    document.getElementById('s-tdp').textContent  = s.tdp + 'W';
+    document.getElementById('s-temp').textContent = (s.temp + coolBonus) + '°C';
+    document.getElementById('s-rel').textContent  = s.reliability + '%';
+    document.getElementById('s-ucost').textContent= Utils.formatMoney(s.unitCost);
+    document.getElementById('s-dtime').textContent= s.devDays + 'd';
+    document.getElementById('s-dcost').textContent= Utils.formatMoney(s.devCost, true);
+  }
+
+  function _submitCpu() {
+    const name = document.getElementById('cpu-name')?.value.trim();
+    if (!name) { Notify.show('Enter a CPU name!', 'error'); return; }
+    const cfg = {
+      name,
+      process:   document.getElementById('cpu-process').value,
+      density:   document.getElementById('cpu-density').value,
+      frequency: parseInt(document.getElementById('cpu-freq').value),
+      overclock: document.getElementById('cpu-oc').checked,
+      cooler:    document.getElementById('cpu-cooler').value,
+      cache:     document.getElementById('cpu-cache').value,
+      ram:       document.getElementById('cpu-ram').value,
+    };
+    const stats = Game.hw.calcCpuStats(cfg);
+    if (Game.finance.getCash() < stats.devCost * 0.1) {
+      Notify.show('Insufficient funds for development!', 'error'); return;
+    }
+    Game.hw.createCpu(cfg);
+    UI.closeWindow('cpu_creator');
+    UI._renderProjectsPanel();
+  }
+
+  // ---- CONTRACTS APP ----
+  function openContracts() {
+    const el = UI.createWindow({
+      id: 'contracts',
+      title: '📋 Contracts',
+      width: 520,
+      height: 450,
+    });
+    _renderContracts();
+    setInterval(_renderContracts, 5000);
+  }
+
+  function _renderContracts() {
+    const body = UI.getWindowBody('contracts');
+    if (!body) return;
+
+    const available = Game.contracts.getAvailable();
+    const active    = Game.contracts.getActive();
+    const products  = Game.hw.getProducts();
+
+    const prodOptions = products.map(p => `<option value="${p.id}">${p.name} (${p.stats.mips} MIPS)</option>`).join('');
+
+    const availHTML = available.length ? available.map(c => `
+      <div class="contract-card">
+        <div class="contract-card-header">
+          <span class="contract-company">${c.company}</span>
+          <span class="contract-value">${Utils.formatMoney(c.monthlyRevenue, true)}/mo</span>
+        </div>
+        <div class="contract-specs">
+          <span class="spec-chip">≥${c.minMips} MIPS</span>
+          <span class="spec-chip">${c.qty.toLocaleString()} units</span>
+          <span class="spec-chip">1 year</span>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${c.description}</div>
+        ${products.length ? `
+          <div style="display:flex;gap:6px;align-items:center">
+            <select class="form-select" id="cpick_${c.id}" style="flex:1">
+              <option value="">— Select product —</option>
+              ${prodOptions}
+            </select>
+            <button class="btn primary" style="padding:5px 10px;font-size:12px" onclick="App._acceptContract('${c.id}')">Accept</button>
+          </div>` : `<div style="font-size:11px;color:var(--red)">No products available</div>`}
+      </div>`) .join('') : `<div style="color:var(--text2);font-size:12px;padding:8px">No available contracts. Check back soon.</div>`;
+
+    const activeHTML = active.length ? active.map(c => {
+      const pct = Math.round(((c.durationDays - c.daysLeft) / c.durationDays) * 100);
+      return `<div class="contract-card">
+        <div class="contract-card-header">
+          <span class="contract-company">${c.company}</span>
+          <span class="contract-value">${Utils.formatMoney(c.monthlyRevenue, true)}/mo</span>
+        </div>
+        <div class="contract-specs">
+          <span class="spec-chip badge-contract">Active</span>
+          <span class="spec-chip">${Math.round(c.daysLeft)}d left</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" style="width:${pct}%;background:var(--green)"></div>
+        </div>
+      </div>`;
+    }).join('') : `<div style="color:var(--text2);font-size:12px;padding:8px">No active contracts.</div>`;
+
+    body.innerHTML = `
+      <div class="tabs">
+        <div class="tab-btn active" onclick="UI._switchTab(this,'avail-tab')">Available (${available.length})</div>
+        <div class="tab-btn" onclick="UI._switchTab(this,'active-tab')">Active (${active.length})</div>
+      </div>
+      <div id="avail-tab" class="tab-pane active">${availHTML}</div>
+      <div id="active-tab" class="tab-pane">${activeHTML}</div>
+    `;
+  }
+
+  function _acceptContract(contractId) {
+    const sel = document.getElementById('cpick_' + contractId);
+    if (!sel || !sel.value) { Notify.show('Select a product first!', 'error'); return; }
+    Game.contracts.accept(contractId, sel.value);
+    _renderContracts();
+  }
+
+  // ---- RESEARCH APP ----
+  function openResearch() {
+    const el = UI.createWindow({
+      id: 'research',
+      title: '🔬 Research & Development',
+      width: 760,
+      height: 500,
+    });
+    _renderResearch();
+  }
+
+  function _renderResearch() {
+    const body = UI.getWindowBody('research');
+    if (!body) return;
+
+    const tree = Game.tech.getTree();
+    const researched = Game.tech.getResearched();
+    const inProgress = Game.tech.getInProgress();
+
+    // Build tree canvas
+    const canvasH = Math.max(...tree.map(n => n.y)) + 120;
+    const canvasW = Math.max(...tree.map(n => n.x)) + 160;
+
+    // SVG lines for dependencies
+    let svgLines = '';
+    for (const node of tree) {
+      for (const prereq of node.prereqs) {
+        const parent = tree.find(n => n.id === prereq);
+        if (!parent) continue;
+        const x1 = parent.x + 60, y1 = parent.y + 20;
+        const x2 = node.x + 60,   y2 = node.y + 20;
+        const color = researched.has(node.id) ? '#00e676' : researched.has(prereq) ? '#2a3548' : '#1a2030';
+        svgLines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2"/>`;
+      }
+    }
+
+    const nodesHTML = tree.map(n => {
+      const done = researched.has(n.id);
+      const prog = inProgress.has(n.id);
+      const avail = Game.tech.isAvailable(n.id);
+      let cls = done ? 'researched' : prog ? 'researching' : avail ? 'available' : 'locked';
+      const daysLeft = prog ? Math.round(inProgress.get(n.id).daysLeft) : null;
+      const costStr  = n.cost > 0 ? Utils.formatMoney(n.cost, true) : 'Free';
+      const action   = (!done && !prog && avail)
+        ? `onclick="App._startResearch('${n.id}')"` : '';
+      return `<div class="tech-node ${cls}" style="left:${n.x}px;top:${n.y}px" ${action} title="${n.desc||n.name}">
+        <div class="tech-node-name">${n.name}</div>
+        <div class="tech-node-cat">${n.cat}</div>
+        <div class="tech-node-cost">${done?'✓ Done':prog?`~${daysLeft}d`:costStr}</div>
+      </div>`;
+    }).join('');
+
+    // Active research sidebar
+    const activeResearch = [...inProgress.entries()].map(([id, prog]) => {
+      const t = Game.tech.getNode(id);
+      const pct = Math.round((1 - prog.daysLeft / (prog.daysLeft / (prog.effortPct / 100))) * 100); // approx
+      return `<div class="active-research-item">
+        <div style="font-weight:700;font-size:11px;color:var(--white)">${t?.name}</div>
+        <div style="font-size:10px;color:var(--text2);margin-top:3px">~${Math.round(prog.daysLeft)}d left</div>
+        <div style="font-size:10px;color:var(--yellow)">Effort: ${prog.effortPct}%</div>
+      </div>`;
+    }).join('') || '<div style="font-size:11px;color:var(--text2)">No active research</div>';
+
+    body.innerHTML = `
+      <div class="research-layout">
+        <div class="tech-tree-canvas" style="min-height:${canvasH}px">
+          <svg style="position:absolute;top:0;left:0;width:${canvasW}px;height:${canvasH}px;pointer-events:none">
+            ${svgLines}
+          </svg>
+          <div style="position:relative;width:${canvasW}px;height:${canvasH}px">
+            ${nodesHTML}
+          </div>
+        </div>
+        <div class="research-sidebar">
+          <div class="section-header">Active Research</div>
+          ${activeResearch}
+          <div style="margin-top:12px">
+            <div class="section-header">Legend</div>
+            <div style="font-size:10px;color:var(--text2);line-height:2">
+              <span style="color:var(--green)">■</span> Done<br>
+              <span style="color:var(--yellow)">■</span> In progress<br>
+              <span style="color:var(--accent)">■</span> Available<br>
+              <span style="color:var(--text2)">■</span> Locked
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function _startResearch(id) {
+    const t = Game.tech.getNode(id);
+    if (!t) return;
+    if (t.cost > 0 && Game.finance.getCash() < t.cost * 0.05) {
+      Notify.show('Insufficient funds to start research!', 'error'); return;
+    }
+    const started = Game.tech.startResearch(id, 100);
+    if (started) {
+      Notify.show(`🔬 Started: ${t.name}`, 'info');
+      _renderResearch();
+    }
+  }
+
+  // ---- PRODUCTION APP ----
+  function openProduction() {
+    const el = UI.createWindow({
+      id: 'production',
+      title: '🏭 Production',
+      width: 520,
+      height: 420,
+    });
+    _renderProduction();
+  }
+
+  function _renderProduction() {
+    const body = UI.getWindowBody('production');
+    if (!body) return;
+    const fabs = Game.production.getFabs();
+    const availProc = Game.tech.getAvailableProcesses();
+    const has300mm = Game.tech.isResearched('wafer_300mm');
+
+    const fabsHTML = fabs.map(f => `
+      <div class="fab-card">
+        <div class="fab-card-header">
+          <span class="fab-card-title">${f.name}</span>
+          <span class="project-badge badge-done">${f.waferSize}</span>
+        </div>
+        <div class="fab-stats">
+          <div><div style="color:var(--text)">Lines</div>${f.lines}</div>
+          <div><div style="color:var(--text)">Capacity</div>${f.capacity.toLocaleString()}/mo</div>
+          <div><div style="color:var(--text)">Ops Cost</div>${Utils.formatMoney(f.opCostPerMonth,true)}/mo</div>
+        </div>
+      </div>`).join('') || `<div style="color:var(--text2);font-size:12px;padding:8px 0">No fabs built yet. Build one below.</div>`;
+
+    body.innerHTML = `
+      <div class="section-header">Your Fabs</div>
+      ${fabsHTML}
+      <div class="section-header" style="margin-top:12px">Build New Fab</div>
+      <div class="form-group">
+        <label class="form-label">Fab Name</label>
+        <input type="text" class="form-input" id="fab-name" placeholder="e.g. Fab 1 - Austin" maxlength="30">
+      </div>
+      <div class="cpu-config-grid">
+        <div class="form-group">
+          <label class="form-label">Wafer Size</label>
+          <select class="form-select" id="fab-wafer" onchange="App._updateFabCost()">
+            <option value="200mm">200mm (${Utils.formatMoney(5_000_000,true)}/line)</option>
+            ${has300mm ? '<option value="300mm">300mm ('+Utils.formatMoney(50_000_000,true)+'/line)</option>' : ''}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Production Lines: <span id="fab-lines-val">1</span></label>
+          <input type="range" class="form-input" id="fab-lines" min="1" max="20" value="1" oninput="document.getElementById('fab-lines-val').textContent=this.value;App._updateFabCost()">
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--yellow);margin-bottom:10px">
+        Total cost: <span id="fab-total-cost">${Utils.formatMoney(5_000_000)}</span>
+      </div>
+      <div class="btn-row" style="margin-top:0">
+        <button class="btn primary" onclick="App._buildFab()">🏭 Build Fab</button>
+      </div>
+    `;
+  }
+
+  function _updateFabCost() {
+    const wafer = document.getElementById('fab-wafer')?.value;
+    const lines = parseInt(document.getElementById('fab-lines')?.value || 1);
+    const perLine = wafer === '300mm' ? 50_000_000 : 5_000_000;
+    document.getElementById('fab-total-cost').textContent = Utils.formatMoney(perLine * lines);
+  }
+
+  function _buildFab() {
+    const name  = document.getElementById('fab-name')?.value.trim();
+    const wafer = document.getElementById('fab-wafer')?.value;
+    const lines = parseInt(document.getElementById('fab-lines')?.value || 1);
+    if (!name) { Notify.show('Enter a fab name!', 'error'); return; }
+    const ok = Game.production.buildFab({ name, waferSize: wafer, lines });
+    if (ok) _renderProduction();
+  }
+
+  // ---- BUSINESS APP ----
+  function openBusiness() {
+    UI.createWindow({
+      id: 'business',
+      title: '🤝 Business Deals',
+      width: 480,
+      height: 360,
+    });
+    const body = UI.getWindowBody('business');
+    body.innerHTML = `
+      <div class="section-header">Available Deal Types</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${[
+          {icon:'🏭', name:'Foundry Deal',    desc:'Outsource or sell production capacity'},
+          {icon:'💰', name:'Acquisition',      desc:'Buy out competitor companies'},
+          {icon:'🤝', name:'Joint Venture',    desc:'Co-develop products with partners'},
+          {icon:'📜', name:'IP Licensing',     desc:'License your technology'},
+        ].map(d => `<div class="hw-type-card" onclick="Notify.show('${d.name} coming soon!','info')" style="opacity:0.6;cursor:not-allowed">
+          <span class="hw-icon">${d.icon}</span>
+          <div class="hw-name">${d.name}</div>
+          <div class="hw-desc">${d.desc}</div>
+        </div>`).join('')}
+      </div>
+      <div style="color:var(--text2);font-size:11px;margin-top:12px;padding:8px;background:var(--bg2);border-radius:4px;border:1px solid var(--border)">
+        💡 Build your company first. Business deals unlock as you grow.
+      </div>
+    `;
+  }
+
+  // ---- PUBLIC API ----
+  function open(appId) {
+    if (!Game.state.started) { Notify.show('Start a game first!', 'warn'); return; }
+    const map = {
+      hardware:   openHardware,
+      contracts:  openContracts,
+      research:   openResearch,
+      production: openProduction,
+      business:   openBusiness,
+    };
+    if (map[appId]) map[appId]();
+    else Notify.show('App not found: ' + appId, 'error');
+  }
+
+  return {
+    open,
+    _openCpuCreator, _recalcCpu, _submitCpu,
+    _acceptContract,
+    _startResearch,
+    _buildFab, _updateFabCost,
+  };
+})();
+
+/* ================================================================
+   BOOT — Show New Game window on load
+   ================================================================ */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    UI.openNewGameWindow();
+  }, 300);
+});
+</script>
+</body>
+</html>
